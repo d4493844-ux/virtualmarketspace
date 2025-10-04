@@ -189,7 +189,7 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {!isOwnProfile && (
+        {!isOwnProfile ? (
           <button
             onClick={toggleFollow}
             className="w-full py-3 rounded-full font-medium mb-6"
@@ -201,6 +201,19 @@ export default function ProfilePage() {
           >
             {isFollowing ? 'Following' : 'Follow'}
           </button>
+        ) : (
+          profileToShow.is_seller && (
+            <button
+              onClick={() => navigate('/catalogue')}
+              className="w-full py-3 rounded-full font-medium mb-6"
+              style={{
+                backgroundColor: 'var(--text-primary)',
+                color: 'var(--bg-primary)',
+              }}
+            >
+              Manage Catalogue
+            </button>
+          )
         )}
 
         {profileToShow.is_seller && (

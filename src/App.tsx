@@ -10,6 +10,9 @@ import ProductDetailPage from './pages/ProductDetailPage';
 import SettingsPage from './pages/SettingsPage';
 import SmartCityPage from './pages/SmartCityPage';
 import AdminPage from './pages/AdminPage';
+import CataloguePage from './pages/CataloguePage';
+import AddProductPage from './pages/AddProductPage';
+import PublicStorePage from './pages/PublicStorePage';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -101,6 +104,30 @@ function App() {
               element={
                 <PrivateRoute>
                   <AdminPage />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/catalogue"
+              element={
+                <PrivateRoute>
+                  <CataloguePage />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/catalogue/add"
+              element={
+                <PrivateRoute>
+                  <AddProductPage />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/store/:sellerId"
+              element={
+                <PrivateRoute>
+                  <PublicStorePage />
                 </PrivateRoute>
               }
             />
