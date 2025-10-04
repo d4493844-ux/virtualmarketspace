@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Edit, Trash2, Share2, Copy, Check } from 'lucide-react';
+import { ArrowLeft, Plus, CreditCard as Edit, Trash2, Share2, Copy, Check } from 'lucide-react';
 import { supabase, type Product } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
