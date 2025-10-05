@@ -163,7 +163,7 @@ export default function ProfilePage() {
         )}
 
         <div className="flex items-center gap-6 mb-6">
-          <div>
+          <div className="text-center">
             <p className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
               {profileToShow.follower_count}
             </p>
@@ -171,7 +171,7 @@ export default function ProfilePage() {
               Followers
             </p>
           </div>
-          <div>
+          <div className="text-center">
             <p className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
               {profileToShow.following_count}
             </p>
@@ -179,7 +179,7 @@ export default function ProfilePage() {
               Following
             </p>
           </div>
-          <div>
+          <div className="text-center">
             <p className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
               {videos.length}
             </p>

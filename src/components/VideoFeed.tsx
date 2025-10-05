@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Heart, MessageCircle, Share2, Bookmark, Volume2, VolumeX, ShoppingBag } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Bookmark, Volume2, VolumeX, ShoppingBag, Send } from 'lucide-react';
 import { supabase, type Video, type User } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -237,14 +237,24 @@ export default function VideoFeed({ mode }: { mode: FeedMode }) {
                 </button>
 
                 {video.product_tags.length > 0 && (
-                  <button
-                    onClick={() => navigate(`/product/${video.product_tags[0]}`)}
-                    className="flex flex-col items-center gap-1"
-                  >
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
-                      <ShoppingBag className="w-6 h-6 text-white" />
-                    </div>
-                  </button>
+                  <>
+                    <button
+                      onClick={() => navigate(`/product/${video.product_tags[0]}`)}
+                      className="flex flex-col items-center gap-1"
+                    >
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
+                        <ShoppingBag className="w-6 h-6 text-white" />
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => navigate(`/profile/${video.user_id}`)}
+                      className="flex flex-col items-center gap-1"
+                    >
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
+                        <Send className="w-6 h-6 text-white" />
+                      </div>
+                    </button>
+                  </>
                 )}
               </div>
             </div>
