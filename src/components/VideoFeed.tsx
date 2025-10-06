@@ -177,8 +177,8 @@ export default function VideoFeed({ mode }: { mode: FeedMode }) {
             </button>
           </div>
 
-          <div className="absolute bottom-0 left-0 right-0 p-4 pb-20">
-            <div className="flex items-end gap-3">
+          <div className="absolute bottom-0 left-0 right-0 p-4 pb-24">
+            <div className="flex items-end gap-3 mb-4">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
                   <img

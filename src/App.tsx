@@ -13,6 +13,8 @@ import AdminPage from './pages/AdminPage';
 import CataloguePage from './pages/CataloguePage';
 import AddProductPage from './pages/AddProductPage';
 import PublicStorePage from './pages/PublicStorePage';
+import CreatePostPage from './pages/CreatePostPage';
+import MessagesPage from './pages/MessagesPage';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -128,6 +130,22 @@ function App() {
               element={
                 <PrivateRoute>
                   <PublicStorePage />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/create"
+              element={
+                <PrivateRoute>
+                  <CreatePostPage />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/messages/:userId"
+              element={
+                <PrivateRoute>
+                  <MessagesPage />
                 </PrivateRoute>
               }
             />
