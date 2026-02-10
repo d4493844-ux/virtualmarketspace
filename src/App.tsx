@@ -16,13 +16,27 @@ import PublicStorePage from './pages/PublicStorePage';
 import CreatePostPage from './pages/CreatePostPage';
 import MessagesPage from './pages/MessagesPage';
 
+/* 🔹 ADDED IMPORTS (nothing removed) */
+import VerificationPage from './pages/VerificationPage';
+import AddressBookPage from './pages/AddressBookPage';
+import BillingPage from './pages/BillingPage';
+
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--bg-primary)' }}>
-        <div className="w-8 h-8 border-2 rounded-full animate-spin" style={{ borderColor: 'var(--border-color)', borderTopColor: 'var(--text-primary)' }} />
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ backgroundColor: 'var(--bg-primary)' }}
+      >
+        <div
+          className="w-8 h-8 border-2 rounded-full animate-spin"
+          style={{
+            borderColor: 'var(--border-color)',
+            borderTopColor: 'var(--text-primary)',
+          }}
+        />
       </div>
     );
   }
@@ -37,6 +51,7 @@ function App() {
         <AuthProvider>
           <Routes>
             <Route path="/auth" element={<AuthPage />} />
+
             <Route
               path="/"
               element={
@@ -45,6 +60,7 @@ function App() {
                 </PrivateRoute>
               }
             />
+
             <Route
               path="/explore"
               element={
@@ -53,6 +69,7 @@ function App() {
                 </PrivateRoute>
               }
             />
+
             <Route
               path="/notifications"
               element={
@@ -61,6 +78,7 @@ function App() {
                 </PrivateRoute>
               }
             />
+
             <Route
               path="/profile"
               element={
@@ -69,6 +87,7 @@ function App() {
                 </PrivateRoute>
               }
             />
+
             <Route
               path="/profile/:userId"
               element={
@@ -77,6 +96,7 @@ function App() {
                 </PrivateRoute>
               }
             />
+
             <Route
               path="/product/:id"
               element={
@@ -85,6 +105,7 @@ function App() {
                 </PrivateRoute>
               }
             />
+
             <Route
               path="/settings"
               element={
@@ -93,6 +114,35 @@ function App() {
                 </PrivateRoute>
               }
             />
+
+            {/* 🔹 ADDED SETTINGS SUB-ROUTES */}
+            <Route
+              path="/settings/verification"
+              element={
+                <PrivateRoute>
+                  <VerificationPage />
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="/settings/address"
+              element={
+                <PrivateRoute>
+                  <AddressBookPage />
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="/settings/billing"
+              element={
+                <PrivateRoute>
+                  <BillingPage />
+                </PrivateRoute>
+              }
+            />
+
             <Route
               path="/smart-city"
               element={
@@ -101,6 +151,7 @@ function App() {
                 </PrivateRoute>
               }
             />
+
             <Route
               path="/admin"
               element={
@@ -109,6 +160,7 @@ function App() {
                 </PrivateRoute>
               }
             />
+
             <Route
               path="/catalogue"
               element={
@@ -117,6 +169,7 @@ function App() {
                 </PrivateRoute>
               }
             />
+
             <Route
               path="/catalogue/add"
               element={
@@ -125,6 +178,7 @@ function App() {
                 </PrivateRoute>
               }
             />
+
             <Route
               path="/store/:sellerId"
               element={
@@ -133,6 +187,7 @@ function App() {
                 </PrivateRoute>
               }
             />
+
             <Route
               path="/create"
               element={
@@ -141,6 +196,7 @@ function App() {
                 </PrivateRoute>
               }
             />
+
             <Route
               path="/messages/:userId"
               element={
@@ -149,6 +205,7 @@ function App() {
                 </PrivateRoute>
               }
             />
+
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </AuthProvider>
