@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Moon, Sun, LogOut, User, MapPin, CreditCard, Bell, Lock, Shield, HelpCircle, FileText, AlertCircle, BadgeCheck, Crown, Globe, Mail, Phone } from 'lucide-react';
+import { ArrowLeft, Moon, Sun, LogOut, User, MapPin, CreditCard, Bell, Lock, Shield, HelpCircle, FileText, AlertCircle, BadgeCheck, Crown, Globe, Mail, Phone, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -321,6 +321,16 @@ export default function SettingsPage() {
           <LogOut className="w-5 h-5" style={{ color: '#ef4444' }} />
           <span className="font-medium" style={{ color: '#ef4444' }}>Sign Out</span>
         </button>
+
+        {/* Delete Account */}
+<button
+  onClick={() => navigate('/settings/delete-account')}
+  className="w-full rounded-2xl p-4 flex items-center justify-center gap-3 hover:opacity-80 transition-opacity"
+  style={{ backgroundColor: '#fef2f2', border: '1px solid #ef4444' }}
+>
+  <Trash2 className="w-5 h-5 text-red-500" />
+  <span className="font-medium text-red-500">Delete Account</span>
+</button>
 
         {/* Version Info */}
         <div className="text-center pt-4 pb-2">
