@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { useNavigate } from 'react-router-dom';
 import AuthPage from './pages/AuthPage';
 import HomePage from './pages/HomePage';
 import ExplorePage from './pages/ExplorePage';
@@ -15,8 +16,6 @@ import AddProductPage from './pages/AddProductPage';
 import PublicStorePage from './pages/PublicStorePage';
 import CreatePostPage from './pages/CreatePostPage';
 import MessagesPage from './pages/MessagesPage';
-
-/* 🔹 ADDED IMPORTS (nothing removed) */
 import VerificationPage from './pages/VerificationPage';
 import AddressBookPage from './pages/AddressBookPage';
 import BillingPage from './pages/BillingPage';
@@ -42,6 +41,30 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
   }
 
   return user ? <>{children}</> : <Navigate to="/auth" />;
+}
+
+// Placeholder component for settings pages that don't exist yet
+function ComingSoonPage({ title }: { title: string }) {
+  const navigate = useNavigate();
+  return (
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
+      <div className="sticky top-0 z-10 flex items-center gap-4 p-4" style={{ backgroundColor: 'var(--bg-primary)', borderBottom: '1px solid var(--border-color)' }}>
+        <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--bg-secondary)' }}>
+          <svg className="w-5 h-5" style={{ color: 'var(--text-primary)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+        </button>
+        <h1 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{title}</h1>
+      </div>
+      <div className="flex flex-col items-center justify-center p-8 text-center" style={{ minHeight: '60vh' }}>
+        <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: 'var(--bg-secondary)' }}>
+          <svg className="w-8 h-8" style={{ color: 'var(--text-secondary)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+        </div>
+        <p className="text-lg font-medium mb-2" style={{ color: 'var(--text-primary)' }}>Coming Soon</p>
+        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>This feature is under development</p>
+      </div>
+    </div>
+  );
 }
 
 function App() {
@@ -115,7 +138,7 @@ function App() {
               }
             />
 
-            {/* 🔹 ADDED SETTINGS SUB-ROUTES */}
+            {/* Settings Sub-Routes - ACTUAL PAGES */}
             <Route
               path="/settings/verification"
               element={
@@ -139,6 +162,79 @@ function App() {
               element={
                 <PrivateRoute>
                   <BillingPage />
+                </PrivateRoute>
+              }
+            />
+
+            {/* Settings Sub-Routes - COMING SOON PLACEHOLDERS */}
+            <Route
+              path="/settings/profile"
+              element={
+                <PrivateRoute>
+                  <ComingSoonPage title="Edit Profile" />
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="/settings/contact"
+              element={
+                <PrivateRoute>
+                  <ComingSoonPage title="Contact Information" />
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="/settings/notifications"
+              element={
+                <PrivateRoute>
+                  <ComingSoonPage title="Notifications" />
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="/settings/language"
+              element={
+                <PrivateRoute>
+                  <ComingSoonPage title="Language & Region" />
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="/settings/password"
+              element={
+                <PrivateRoute>
+                  <ComingSoonPage title="Password & Security" />
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="/settings/privacy"
+              element={
+                <PrivateRoute>
+                  <ComingSoonPage title="Privacy Settings" />
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="/settings/help"
+              element={
+                <PrivateRoute>
+                  <ComingSoonPage title="Help & Support" />
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="/settings/legal"
+              element={
+                <PrivateRoute>
+                  <ComingSoonPage title="Legal & Policies" />
                 </PrivateRoute>
               }
             />
