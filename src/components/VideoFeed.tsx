@@ -1,264 +1,181 @@
-import { useState, useEffect, useRef } from 'react';
-import { Heart, MessageCircle, Share2, Bookmark, Volume2, VolumeX, ShoppingBag, Send } from 'lucide-react';
-import { supabase, type Video, type User } from '../lib/supabase';
-import { useAuth } from '../contexts/AuthContext';
+import { useState, useEffect } from 'react';
+import { Heart, MessageCircle, Share2, ShoppingBag, Send, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { supabase, type Video } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 
-type FeedMode = 'following' | 'for-you';
+interface VideoFeedProps {
+  mode: 'following' | 'for-you';
+}
 
-export default function VideoFeed({ mode }: { mode: FeedMode }) {
+export default function VideoFeed({ mode }: VideoFeedProps) {
   const [videos, setVideos] = useState<Video[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [muted, setMuted] = useState(true);
-  const [loading, setLoading] = useState(true);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const videoRefs = useRef<{ [key: string]: HTMLVideoElement }>({});
+  const [showComments, setShowComments] = useState<string | null>(null);
+  const [comments, setComments] = useState<any[]>([]);
+  const [commentText, setCommentText] = useState('');
+  const [likedVideos, setLikedVideos] = useState<Set<string>>(new Set());
   const { user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     loadVideos();
-  }, [mode]);
-
-  useEffect(() => {
-    const currentVideo = videoRefs.current[videos[currentIndex]?.id];
-    if (currentVideo) {
-      currentVideo.play().catch(() => {});
-    }
-  }, [currentIndex, videos]);
+    if (user) loadUserLikes();
+  }, [mode, user]);
 
   const loadVideos = async () => {
-    setLoading(true);
-    try {
-      let query = supabase
-        .from('videos')
-        .select(`
-          *,
-          user:users!videos_user_id_fkey(*)
-        `)
-        .order('created_at', { ascending: false })
-        .limit(20);
-
-      if (mode === 'following' && user) {
-        const { data: follows } = await supabase
-          .from('follows')
-          .select('following_id')
-          .eq('follower_id', user.id);
-
-        const followingIds = follows?.map(f => f.following_id) || [];
-        query = query.in('user_id', followingIds);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      setVideos((data as Video[]) || []);
-    } catch (error) {
-      console.error('Error loading videos:', error);
-    } finally {
-      setLoading(false);
-    }
+    const { data } = await supabase
+      .from('videos')
+      .select('*, user:users!videos_user_id_fkey(*)')
+      .order('created_at', { ascending: false });
+    if (data) setVideos(data as Video[]);
   };
 
-  const handleScroll = () => {
-    if (!containerRef.current) return;
-    const scrollTop = containerRef.current.scrollTop;
-    const videoHeight = window.innerHeight;
-    const newIndex = Math.round(scrollTop / videoHeight);
-    if (newIndex !== currentIndex && newIndex >= 0 && newIndex < videos.length) {
-      setCurrentIndex(newIndex);
-
-      Object.keys(videoRefs.current).forEach(id => {
-        const video = videoRefs.current[id];
-        if (id !== videos[newIndex]?.id) {
-          video?.pause();
-        }
-      });
-    }
-  };
-
-  const toggleLike = async (video: Video) => {
+  const loadUserLikes = async () => {
     if (!user) return;
+    const { data } = await supabase.from('likes').select('video_id').eq('user_id', user.id);
+    if (data) setLikedVideos(new Set(data.map(like => like.video_id)));
+  };
 
-    const { data: existingLike } = await supabase
-      .from('likes')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('video_id', video.id)
-      .maybeSingle();
+  const loadComments = async (videoId: string) => {
+    const { data } = await supabase
+      .from('comments')
+      .select('*, user:users!comments_user_id_fkey(*)')
+      .eq('video_id', videoId)
+      .order('created_at', { ascending: false });
+    if (data) setComments(data);
+  };
 
-    if (existingLike) {
-      await supabase.from('likes').delete().eq('id', existingLike.id);
-      setVideos(videos.map(v =>
-        v.id === video.id ? { ...v, like_count: v.like_count - 1 } : v
-      ));
+  const handleLike = async (video: Video) => {
+    if (!user) return;
+    const isLiked = likedVideos.has(video.id);
+
+    if (isLiked) {
+      await supabase.from('likes').delete().eq('user_id', user.id).eq('video_id', video.id);
+      await supabase.from('videos').update({ like_count: Math.max(0, video.like_count - 1) }).eq('id', video.id);
+      setLikedVideos(prev => { const newSet = new Set(prev); newSet.delete(video.id); return newSet; });
+      setVideos(videos.map(v => v.id === video.id ? { ...v, like_count: Math.max(0, v.like_count - 1) } : v));
     } else {
       await supabase.from('likes').insert({ user_id: user.id, video_id: video.id });
-      setVideos(videos.map(v =>
-        v.id === video.id ? { ...v, like_count: v.like_count + 1 } : v
-      ));
-
+      await supabase.from('videos').update({ like_count: video.like_count + 1 }).eq('id', video.id);
+      setLikedVideos(prev => new Set(prev).add(video.id));
+      setVideos(videos.map(v => v.id === video.id ? { ...v, like_count: v.like_count + 1 } : v));
       if (video.user_id !== user.id) {
         await supabase.from('notifications').insert({
-          user_id: video.user_id,
-          type: 'like',
-          actor_id: user.id,
-          video_id: video.id,
+          user_id: video.user_id, type: 'like', actor_id: user.id, video_id: video.id,
           message: `${user.display_name} liked your post`,
         });
       }
     }
   };
 
-  if (loading) {
-    return (
-      <div className="h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--bg-primary)' }}>
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 rounded-full animate-spin mx-auto mb-2" style={{ borderColor: 'var(--border-color)', borderTopColor: 'var(--text-primary)' }} />
-          <p style={{ color: 'var(--text-secondary)' }}>Loading feed...</p>
-        </div>
-      </div>
-    );
-  }
+  const handleComment = async (video: Video) => {
+    if (!user || !commentText.trim()) return;
+    const { error } = await supabase.from('comments').insert({
+      user_id: user.id, video_id: video.id, content: commentText,
+    });
+    if (!error) {
+      await supabase.from('videos').update({ comment_count: video.comment_count + 1 }).eq('id', video.id);
+      setVideos(videos.map(v => v.id === video.id ? { ...v, comment_count: v.comment_count + 1 } : v));
+      setCommentText('');
+      loadComments(video.id);
+      if (video.user_id !== user.id) {
+        await supabase.from('notifications').insert({
+          user_id: video.user_id, type: 'comment', actor_id: user.id, video_id: video.id,
+          message: `${user.display_name} commented: ${commentText.slice(0, 30)}...`,
+        });
+      }
+    }
+  };
 
   if (videos.length === 0) {
-    return (
-      <div className="h-screen flex items-center justify-center px-4" style={{ backgroundColor: 'var(--bg-primary)' }}>
-        <div className="text-center">
-          <p className="text-lg mb-2" style={{ color: 'var(--text-primary)' }}>No videos yet</p>
-          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-            {mode === 'following' ? 'Follow creators to see their content' : 'Check back soon'}
-          </p>
-        </div>
-      </div>
-    );
+    return <div className="h-full flex items-center justify-center" style={{ backgroundColor: 'var(--bg-primary)' }}><p style={{ color: 'var(--text-secondary)' }}>No posts yet</p></div>;
   }
 
   return (
-    <div
-      ref={containerRef}
-      onScroll={handleScroll}
-      className="h-screen overflow-y-scroll snap-y snap-mandatory no-scrollbar"
-      style={{ backgroundColor: 'var(--bg-primary)' }}
-    >
-      {videos.map((video, index) => (
-        <div key={video.id} className="h-screen snap-start relative">
+    <div className="h-full overflow-y-scroll snap-y snap-mandatory" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+      <style>{`::-webkit-scrollbar { display: none; }`}</style>
+      
+      {videos.map((video) => (
+        <div key={video.id} className="h-full w-full snap-start snap-always relative flex items-center justify-center" style={{ backgroundColor: 'var(--bg-primary)' }}>
+          
+          {/* Video/Image */}
           {video.type === 'video' && video.video_url ? (
-            <video
-              ref={el => { if (el) videoRefs.current[video.id] = el; }}
-              src={video.video_url}
-              loop
-              muted={muted}
-              playsInline
-              className="w-full h-full object-cover"
-              poster={video.thumbnail_url || undefined}
-            />
+            <video src={video.video_url} className="w-full h-full object-cover" loop autoPlay muted playsInline />
           ) : video.type === 'image' && video.image_url ? (
-            <img
-              src={video.image_url}
-              alt={video.caption}
-              className="w-full h-full object-cover"
-            />
+            <img src={video.image_url} alt="" className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full flex items-center justify-center p-8" style={{ backgroundColor: 'var(--bg-secondary)' }}>
-              <p className="text-xl text-center" style={{ color: 'var(--text-primary)' }}>{video.caption}</p>
+            <div className="w-full h-full flex items-center justify-center p-8">
+              <p className="text-lg text-center text-white">{video.caption}</p>
             </div>
           )}
 
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60 pointer-events-none" />
-
-          <div className="absolute top-4 right-4">
-            <button
-              onClick={() => setMuted(!muted)}
-              className="w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-sm"
-              style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}
-            >
-              {muted ? <VolumeX className="w-5 h-5 text-white" /> : <Volume2 className="w-5 h-5 text-white" />}
+          {/* Right Actions */}
+          <div className="absolute right-4 bottom-24 flex flex-col gap-6 z-10">
+            <button onClick={() => navigate(`/profile/${video.user_id}`)} className="flex flex-col items-center">
+              <img src={video.user?.avatar_url || 'https://images.pexels.com/photos/771742/pexels-photo-771742.jpeg?w=200'} alt="" className="w-12 h-12 rounded-full object-cover border-2 border-white" />
             </button>
+
+            <button onClick={() => handleLike(video)} className="flex flex-col items-center gap-1">
+              <Heart className="w-8 h-8" style={{ color: likedVideos.has(video.id) ? '#ef4444' : 'white' }} fill={likedVideos.has(video.id) ? '#ef4444' : 'none'} />
+              <span className="text-xs font-medium text-white">{video.like_count}</span>
+            </button>
+
+            <button onClick={() => { setShowComments(showComments === video.id ? null : video.id); if (showComments !== video.id) loadComments(video.id); }} className="flex flex-col items-center gap-1">
+              <MessageCircle className="w-8 h-8 text-white" />
+              <span className="text-xs font-medium text-white">{video.comment_count}</span>
+            </button>
+
+            <button className="flex flex-col items-center gap-1">
+              <Share2 className="w-8 h-8 text-white" />
+              <span className="text-xs font-medium text-white">{video.share_count}</span>
+            </button>
+
+            {video.product_tags && video.product_tags.length > 0 && (
+              <button className="flex flex-col items-center gap-1">
+                <ShoppingBag className="w-8 h-8 text-white" />
+              </button>
+            )}
           </div>
 
-          <div className="absolute bottom-0 left-0 right-0 p-4 pb-24">
-            <div className="flex items-end gap-3 mb-4">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <img
-                    src={video.user?.avatar_url || 'https://images.pexels.com/photos/771742/pexels-photo-771742.jpeg?w=100'}
-                    alt={video.user?.display_name}
-                    className="w-10 h-10 rounded-full object-cover cursor-pointer"
-                    onClick={() => navigate(`/profile/${video.user_id}`)}
-                  />
-                  <div>
-                    <p className="text-white font-semibold text-sm">{video.user?.display_name}</p>
-                    {video.user?.location && (
-                      <p className="text-white/70 text-xs">{video.user.location}</p>
-                    )}
-                  </div>
-                </div>
-                <p className="text-white text-sm mb-2">{video.caption}</p>
-                {video.hashtags.length > 0 && (
-                  <p className="text-white/80 text-sm">
-                    {video.hashtags.map(tag => `#${tag}`).join(' ')}
-                  </p>
-                )}
+          {/* Bottom Info */}
+          <div className="absolute bottom-24 left-4 right-20 z-10">
+            <p className="font-bold text-white mb-1">{video.user?.display_name}</p>
+            <p className="text-sm text-white mb-2">{video.caption}</p>
+            {video.hashtags && video.hashtags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {video.hashtags.map((tag, i) => <span key={i} className="text-sm text-white opacity-80">#{tag}</span>)}
               </div>
+            )}
+          </div>
 
-              <div className="flex flex-col gap-4">
-                <button
-                  onClick={() => toggleLike(video)}
-                  className="flex flex-col items-center gap-1"
-                >
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
-                    <Heart className="w-6 h-6 text-white" fill="white" />
-                  </div>
-                  <span className="text-white text-xs">{video.like_count}</span>
-                </button>
-
-                <button
-                  onClick={() => navigate(`/video/${video.id}`)}
-                  className="flex flex-col items-center gap-1"
-                >
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
-                    <MessageCircle className="w-6 h-6 text-white" />
-                  </div>
-                  <span className="text-white text-xs">{video.comment_count}</span>
-                </button>
-
-                <button className="flex flex-col items-center gap-1">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
-                    <Share2 className="w-6 h-6 text-white" />
-                  </div>
-                  <span className="text-white text-xs">{video.share_count}</span>
-                </button>
-
-                <button className="flex flex-col items-center gap-1">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
-                    <Bookmark className="w-6 h-6 text-white" />
-                  </div>
-                </button>
-
-                {video.product_tags.length > 0 && (
-                  <>
-                    <button
-                      onClick={() => navigate(`/product/${video.product_tags[0]}`)}
-                      className="flex flex-col items-center gap-1"
-                    >
-                      <div className="w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
-                        <ShoppingBag className="w-6 h-6 text-white" />
+          {/* Comments */}
+          {showComments === video.id && (
+            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-end z-20">
+              <div className="w-full rounded-t-3xl max-h-[60vh] flex flex-col" style={{ backgroundColor: 'var(--bg-primary)' }}>
+                <div className="p-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border-color)' }}>
+                  <h3 className="font-bold" style={{ color: 'var(--text-primary)' }}>Comments ({video.comment_count})</h3>
+                  <button onClick={() => setShowComments(null)}><X className="w-6 h-6" style={{ color: 'var(--text-primary)' }} /></button>
+                </div>
+                <div className="overflow-y-auto flex-1 p-4">
+                  {comments.map((c) => (
+                    <div key={c.id} className="flex gap-3 mb-4">
+                      <img src={c.user?.avatar_url || 'https://images.pexels.com/photos/771742/pexels-photo-771742.jpeg?w=200'} alt="" className="w-8 h-8 rounded-full object-cover" />
+                      <div className="flex-1">
+                        <p className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>{c.user?.display_name}</p>
+                        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{c.content}</p>
                       </div>
-                    </button>
-                    <button
-                      onClick={() => navigate(`/profile/${video.user_id}`)}
-                      className="flex flex-col items-center gap-1"
-                    >
-                      <div className="w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
-                        <Send className="w-6 h-6 text-white" />
-                      </div>
-                    </button>
-                  </>
-                )}
+                    </div>
+                  ))}
+                </div>
+                <div className="p-4 flex gap-2" style={{ borderTop: '1px solid var(--border-color)' }}>
+                  <input type="text" value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder="Add a comment..." className="flex-1 px-4 py-2 rounded-full" style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }} onKeyPress={(e) => { if (e.key === 'Enter') handleComment(video); }} />
+                  <button onClick={() => handleComment(video)} className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: '#3b82f6' }}>
+                    <Send className="w-5 h-5 text-white" />
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       ))}
     </div>

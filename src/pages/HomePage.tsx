@@ -5,7 +5,8 @@ import { supabase, type Video } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
 interface VideoFeedProps {
-  mode: 'following' | 'for-you';
+  mode: 'following' | 'for-you'; .
+   
 }
 
 export default function VideoFeed({ mode }: VideoFeedProps) {
