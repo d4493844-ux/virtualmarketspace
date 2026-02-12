@@ -96,7 +96,7 @@ export default function VideoFeed({ mode }: VideoFeedProps) {
       <style>{`::-webkit-scrollbar { display: none; }`}</style>
       
       {videos.map((video) => (
-        <div key={video.id} className="h-full w-full snap-start snap-always relative flex items-center justify-center" style={{ backgroundColor: '#000' }}>
+        <div key={video.id} className="h-full w-full snap-start snap-always relative flex items-center justify-center" style={{ backgroundColor: 'var(--bg-primary)' }}>
           
           {/* Video/Image */}
           {video.type === 'video' && video.video_url ? (
