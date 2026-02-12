@@ -21,16 +21,41 @@ export default function NotificationsPage() {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
+      // First try with the join, if it fails, fall back to simple query
+      let query = supabase
         .from('notifications')
-        .select(`*, actor:users!notifications_actor_id_fkey(*)`)
+        .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(50);
 
-      if (error) throw error;
-      setNotifications((data as Notification[]) || []);
+      const { data, error } = await query;
 
+      if (error) {
+        console.error('Error loading notifications:', error);
+        setLoading(false);
+        return;
+      }
+
+      // Load actor details separately
+      const notificationsWithActors = await Promise.all(
+        (data || []).map(async (notification) => {
+          if (notification.actor_id) {
+            const { data: actor } = await supabase
+              .from('users')
+              .select('*')
+              .eq('id', notification.actor_id)
+              .single();
+            
+            return { ...notification, actor };
+          }
+          return notification;
+        })
+      );
+
+      setNotifications(notificationsWithActors as Notification[]);
+
+      // Mark as read
       const unreadIds = data?.filter(n => !n.is_read).map(n => n.id) || [];
       if (unreadIds.length > 0) {
         await supabase
@@ -111,7 +136,7 @@ export default function NotificationsPage() {
             <div
               key={notification.id}
               onClick={() => handleNotificationClick(notification)}
-              className="flex items-start gap-3 p-4 cursor-pointer transition-colors"
+              className="flex items-start gap-3 p-4 cursor-pointer transition-colors hover:opacity-80"
               style={{
                 backgroundColor: notification.is_read ? 'transparent' : 'var(--bg-secondary)',
                 borderBottom: '1px solid var(--border-color)',

@@ -16,7 +16,7 @@ import AddProductPage from './pages/AddProductPage';
 import PublicStorePage from './pages/PublicStorePage';
 import CreatePostPage from './pages/CreatePostPage';
 import MessagesPage from './pages/MessagesPage';
-
+import VideoDetailPage from './pages/VideoDetailPage';
 // Settings Pages
 import VerificationPage from './pages/VerificationPage';
 import AddressBookPage from './pages/AddressBookPage';
@@ -59,6 +59,7 @@ function App() {
             <Route path="/profile/:userId" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
             <Route path="/product/:id" element={<PrivateRoute><ProductDetailPage /></PrivateRoute>} />
             <Route path="/settings" element={<PrivateRoute><SettingsPage /></PrivateRoute>} />
+            <Route path="/video/:videoId" element={<PrivateRoute><VideoDetailPage /></PrivateRoute>} />
             
             {/* Settings Sub-Routes - ALL FUNCTIONAL */}
             <Route path="/settings/profile" element={<PrivateRoute><EditProfilePage /></PrivateRoute>} />
