@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase';
 
 export default function EditProfilePage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth(); // Need refreshUser function
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     display_name: user?.display_name || '',
@@ -28,8 +28,10 @@ export default function EditProfilePage() {
     setLoading(false);
 
     if (!error) {
+      // REFRESH USER DATA
+      if (refreshUser) await refreshUser();
       alert('Profile updated successfully!');
-      navigate('/settings');
+      navigate('/profile');
     } else {
       alert('Error updating profile: ' + error.message);
     }
@@ -60,7 +62,7 @@ export default function EditProfilePage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>Display Name *</label>
+          <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>Display Name</label>
           <input type="text" value={formData.display_name} onChange={(e) => setFormData({ ...formData, display_name: e.target.value })} className="w-full px-4 py-3 rounded-xl" style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)' }} />
         </div>
 

@@ -8,6 +8,7 @@ type AuthContextType = {
   signUp: (email: string, password: string, displayName: string) => Promise<void>;
   signOut: () => Promise<void>;
   demoLogin: (email: string) => Promise<void>;
+  refreshUser: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,6 +24,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     setLoading(false);
   }, []);
+
+  const refreshUser = async () => {
+    if (!user) return;
+    
+    const { data: userData, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+
+    if (!error && userData) {
+      setUser(userData as User);
+      localStorage.setItem('vms-demo-user', JSON.stringify(userData));
+    }
+  };
 
   const demoLogin = async (email: string) => {
     const { data, error } = await supabase
@@ -103,7 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut, demoLogin }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut, demoLogin, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );
