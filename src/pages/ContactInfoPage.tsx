@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { ArrowLeft, Save, Mail, Phone, Check, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Save, Mail, Phone, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 
 export default function ContactInfoPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [phone, setPhone] = useState(user?.phone || '');
   const [email] = useState(user?.email || '');
   const [loading, setLoading] = useState(false);
@@ -20,14 +20,14 @@ export default function ContactInfoPage() {
       .update({ phone })
       .eq('id', user.id);
 
-    setLoading(false);
-
     if (!error) {
+      await refreshUser(); // ✅ REFRESH USER DATA!
       alert('Phone number updated successfully!');
-      navigate('/settings');
     } else {
       alert('Error: ' + error.message);
     }
+    
+    setLoading(false);
   };
 
   return (
