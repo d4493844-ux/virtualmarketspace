@@ -45,16 +45,15 @@ export default function AdminDashboardPage() {
   });
 
   useEffect(() => {
-    // Check if user is admin (you should add is_admin column to users table)
-    // For now, we'll check if user email is admin
-    if (user?.email !== 'admin@vms.ng') {
-      alert('Access denied. Admin only.');
-      navigate('/');
-      return;
-    }
-    
-    loadData();
-  }, [user, activeTab]);
+  // Check if user is admin
+  if (!user?.is_admin) {
+    alert('Access denied. Admin only.');
+    navigate('/');
+    return;
+  }
+  
+  loadData();
+}, [user, activeTab]);
 
   const loadData = async () => {
     setLoading(true);
