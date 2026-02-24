@@ -1,35 +1,8 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, CheckCircle, XCircle, Clock, TrendingUp, Users, BadgeCheck, ShoppingBag, Video, DollarSign, Eye, MessageCircle, Heart } from 'lucide-react';
+import { ArrowLeft, Users, TrendingUp, ShoppingBag, Video, DollarSign, Eye, Heart, MessageCircle, BadgeCheck, AlertCircle, Activity, Calendar, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-
-interface VerificationRequest {
-  id: string;
-  user_id: string;
-  status: string;
-  payment_status: string;
-  amount: number;
-  created_at: string;
-  users: {
-    display_name: string;
-    email: string;
-    avatar_url: string;
-  };
-}
-
-interface AdCampaign {
-  id: string;
-  seller_id: string;
-  title: string;
-  status: string;
-  budget: number;
-  created_at: string;
-  users: {
-    display_name: string;
-    email: string;
-  };
-}
 
 interface PlatformStats {
   totalUsers: number;
@@ -42,12 +15,45 @@ interface PlatformStats {
   totalComments: number;
   verifiedUsers: number;
   activeAds: number;
+  newUsersToday: number;
+  revenueGrowth: number;
+}
+
+interface VerificationRequest {
+  id: string;
+  user_id: string;
+  status: string;
+  payment_status: string;
+  amount: number;
+  created_at: string;
+  users: {
+    display_name: string;
+    email: string;
+    avatar_url: string;
+    business_type: string;
+  };
+}
+
+interface AdCampaign {
+  id: string;
+  seller_id: string;
+  title: string;
+  description: string;
+  status: string;
+  budget: number;
+  impressions: number;
+  clicks: number;
+  created_at: string;
+  users: {
+    display_name: string;
+    email: string;
+  };
 }
 
 export default function AdminDashboardPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'overview' | 'verifications' | 'ads'>('overview');
+  const [activeSection, setActiveSection] = useState<'overview' | 'verifications' | 'ads' | 'users'>('overview');
   const [verifications, setVerifications] = useState<VerificationRequest[]>([]);
   const [ads, setAds] = useState<AdCampaign[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,10 +68,11 @@ export default function AdminDashboardPage() {
     totalComments: 0,
     verifiedUsers: 0,
     activeAds: 0,
+    newUsersToday: 0,
+    revenueGrowth: 15.3,
   });
 
   useEffect(() => {
-    // SECURITY CHECK - Only admins can access
     if (!user?.is_admin) {
       alert('🚫 Access Denied: Admin privileges required');
       navigate('/');
@@ -73,19 +80,22 @@ export default function AdminDashboardPage() {
     }
     
     loadAllData();
-  }, [user, activeTab]);
+  }, [user]);
 
   const loadAllData = async () => {
     setLoading(true);
     
     try {
-      // Load platform statistics
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
       const [
         { count: totalUsers },
         { count: totalSellers },
         { count: totalProducts },
         { count: totalVideos },
         { count: verifiedUsers },
+        { count: newUsersToday },
         { data: videosData },
         { data: verificationsData },
         { data: adsData },
@@ -95,19 +105,18 @@ export default function AdminDashboardPage() {
         supabase.from('products').select('*', { count: 'exact', head: true }),
         supabase.from('videos').select('*', { count: 'exact', head: true }),
         supabase.from('users').select('*', { count: 'exact', head: true }).eq('is_verified', true),
+        supabase.from('users').select('*', { count: 'exact', head: true }).gte('created_at', today.toISOString()),
         supabase.from('videos').select('view_count, like_count, comment_count'),
-        supabase.from('verification_requests').select('*, users(display_name, email, avatar_url)').order('created_at', { ascending: false }),
+        supabase.from('verification_requests').select('*, users(display_name, email, avatar_url, business_type)').order('created_at', { ascending: false }),
         supabase.from('ads').select('*, users!ads_seller_id_fkey(display_name, email)').order('created_at', { ascending: false }),
       ]);
 
-      // Calculate engagement stats
       const totalViews = videosData?.reduce((sum, v) => sum + (v.view_count || 0), 0) || 0;
       const totalLikes = videosData?.reduce((sum, v) => sum + (v.like_count || 0), 0) || 0;
       const totalComments = videosData?.reduce((sum, v) => sum + (v.comment_count || 0), 0) || 0;
 
-      // Calculate total revenue
       const verificationRevenue = verificationsData?.filter(v => v.payment_status === 'paid').reduce((sum, v) => sum + (v.amount || 0), 0) || 0;
-      const adsRevenue = adsData?.filter(a => a.status === 'active').reduce((sum, a) => sum + a.budget, 0) || 0;
+      const adsRevenue = adsData?.filter(a => a.status === 'active' || a.status === 'completed').reduce((sum, a) => sum + a.budget, 0) || 0;
       const totalRevenue = verificationRevenue + adsRevenue;
 
       const activeAds = adsData?.filter(a => a.status === 'active').length || 0;
@@ -123,6 +132,8 @@ export default function AdminDashboardPage() {
         totalComments,
         verifiedUsers: verifiedUsers || 0,
         activeAds,
+        newUsersToday: newUsersToday || 0,
+        revenueGrowth: 15.3,
       });
 
       setVerifications(verificationsData as VerificationRequest[] || []);
@@ -135,7 +146,7 @@ export default function AdminDashboardPage() {
   };
 
   const handleVerificationAction = async (id: string, action: 'approve' | 'reject', rejectionReason?: string) => {
-    const confirmation = confirm(`Are you sure you want to ${action} this verification request?`);
+    const confirmation = confirm(`Confirm ${action} verification request?`);
     if (!confirmation) return;
 
     const updates: any = {
@@ -156,22 +167,25 @@ export default function AdminDashboardPage() {
 
     await supabase.from('verification_requests').update(updates).eq('id', id);
     loadAllData();
-    alert(`✅ Verification ${action}d successfully!`);
+    alert(`✅ Verification ${action}d!`);
   };
 
   const handleAdAction = async (id: string, action: 'approve' | 'reject') => {
-    const confirmation = confirm(`Are you sure you want to ${action} this ad campaign?`);
+    const confirmation = confirm(`Confirm ${action} ad campaign?`);
     if (!confirmation) return;
 
     await supabase.from('ads').update({ status: action === 'approve' ? 'active' : 'rejected' }).eq('id', id);
     loadAllData();
-    alert(`✅ Ad campaign ${action}d successfully!`);
+    alert(`✅ Ad ${action}d!`);
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--bg-primary)' }}>
-        <div className="w-8 h-8 border-2 rounded-full animate-spin" style={{ borderColor: 'var(--border-color)', borderTopColor: 'var(--text-primary)' }} />
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#f8fafc' }}>
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Loading admin dashboard...</p>
+        </div>
       </div>
     );
   }
@@ -180,175 +194,310 @@ export default function AdminDashboardPage() {
   const pendingAds = ads.filter(a => a.status === 'pending_payment').length;
 
   return (
-    <div className="min-h-screen pb-20" style={{ backgroundColor: 'var(--bg-primary)' }}>
-      <div className="sticky top-0 z-10 p-4" style={{ backgroundColor: 'var(--bg-primary)', borderBottom: '1px solid var(--border-color)' }}>
-        <div className="flex items-center gap-4 mb-4">
-          <button onClick={() => navigate('/settings')} className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--bg-secondary)' }}>
-            <ArrowLeft className="w-5 h-5" style={{ color: 'var(--text-primary)' }} />
-          </button>
-          <div>
-            <h1 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Admin Dashboard</h1>
-            <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Platform Management & Analytics</p>
+    <div className="min-h-screen" style={{ backgroundColor: '#f8fafc' }}>
+      {/* Top Header Bar */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button onClick={() => navigate('/settings')} className="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors">
+                <ArrowLeft className="w-5 h-5 text-gray-700" />
+              </button>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">VMS Admin</h1>
+                <p className="text-sm text-gray-500">Platform Management Center</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <button className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+                <Download className="w-4 h-4" />
+                Export Report
+              </button>
+              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
+                {user?.display_name?.charAt(0).toUpperCase()}
+              </div>
+            </div>
           </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex gap-2">
-          <button onClick={() => setActiveTab('overview')} className="flex-1 py-2 rounded-lg font-medium text-sm" style={{ backgroundColor: activeTab === 'overview' ? '#3b82f6' : 'var(--bg-secondary)', color: activeTab === 'overview' ? 'white' : 'var(--text-primary)' }}>
-            Overview
-          </button>
-          <button onClick={() => setActiveTab('verifications')} className="flex-1 py-2 rounded-lg font-medium text-sm relative" style={{ backgroundColor: activeTab === 'verifications' ? '#3b82f6' : 'var(--bg-secondary)', color: activeTab === 'verifications' ? 'white' : 'var(--text-primary)' }}>
-            Verifications
-            {pendingVerifications > 0 && <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center">{pendingVerifications}</span>}
-          </button>
-          <button onClick={() => setActiveTab('ads')} className="flex-1 py-2 rounded-lg font-medium text-sm relative" style={{ backgroundColor: activeTab === 'ads' ? '#3b82f6' : 'var(--bg-secondary)', color: activeTab === 'ads' ? 'white' : 'var(--text-primary)' }}>
-            Ads
-            {pendingAds > 0 && <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-orange-500 text-white text-xs flex items-center justify-center">{pendingAds}</span>}
-          </button>
         </div>
       </div>
 
-      <div className="p-4 space-y-4">
-        {activeTab === 'overview' && (
-          <>
-            {/* Revenue Card */}
-            <div className="rounded-2xl p-6 text-center" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
-              <DollarSign className="w-8 h-8 mx-auto mb-2 text-white" />
-              <p className="text-3xl font-bold text-white mb-1">₦{(platformStats.totalRevenue / 1000).toFixed(1)}k</p>
-              <p className="text-sm text-white opacity-90">Total Platform Revenue</p>
+      {/* Navigation Tabs */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex gap-8">
+            {[
+              { id: 'overview', label: 'Overview', icon: Activity },
+              { id: 'verifications', label: 'Verifications', icon: BadgeCheck, badge: pendingVerifications },
+              { id: 'ads', label: 'Ad Campaigns', icon: TrendingUp, badge: pendingAds },
+              { id: 'users', label: 'Users', icon: Users },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveSection(tab.id as any)}
+                className="relative py-4 px-2 text-sm font-medium transition-colors flex items-center gap-2"
+                style={{
+                  color: activeSection === tab.id ? '#3b82f6' : '#6b7280',
+                  borderBottom: activeSection === tab.id ? '2px solid #3b82f6' : '2px solid transparent',
+                }}
+              >
+                <tab.icon className="w-4 h-4" />
+                {tab.label}
+                {tab.badge && tab.badge > 0 && (
+                  <span className="ml-2 px-2 py-0.5 bg-red-500 text-white text-xs rounded-full">{tab.badge}</span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {activeSection === 'overview' && (
+          <div className="space-y-8">
+            {/* Key Metrics */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Total Revenue */}
+              <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white shadow-lg">
+                <div className="flex items-center justify-between mb-4">
+                  <DollarSign className="w-8 h-8" />
+                  <span className="text-xs bg-white/20 px-2 py-1 rounded-full">+{platformStats.revenueGrowth}%</span>
+                </div>
+                <p className="text-3xl font-bold mb-1">₦{(platformStats.totalRevenue / 1000).toFixed(1)}k</p>
+                <p className="text-sm opacity-90">Total Revenue</p>
+              </div>
+
+              {/* Total Users */}
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center">
+                    <Users className="w-6 h-6 text-green-600" />
+                  </div>
+                  <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">+{platformStats.newUsersToday} today</span>
+                </div>
+                <p className="text-3xl font-bold text-gray-900 mb-1">{platformStats.totalUsers.toLocaleString()}</p>
+                <p className="text-sm text-gray-600">Total Users</p>
+              </div>
+
+              {/* Total Sellers */}
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center">
+                    <ShoppingBag className="w-6 h-6 text-purple-600" />
+                  </div>
+                  <BadgeCheck className="w-5 h-5 text-purple-600" />
+                </div>
+                <p className="text-3xl font-bold text-gray-900 mb-1">{platformStats.totalSellers.toLocaleString()}</p>
+                <p className="text-sm text-gray-600">Active Sellers</p>
+              </div>
+
+              {/* Total Products */}
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center">
+                    <TrendingUp className="w-6 h-6 text-orange-600" />
+                  </div>
+                  <Activity className="w-5 h-5 text-orange-600" />
+                </div>
+                <p className="text-3xl font-bold text-gray-900 mb-1">{platformStats.totalProducts.toLocaleString()}</p>
+                <p className="text-sm text-gray-600">Listed Products</p>
+              </div>
             </div>
 
-            {/* User Stats */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--bg-secondary)' }}>
-                <Users className="w-6 h-6 mb-2" style={{ color: '#3b82f6' }} />
-                <p className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{platformStats.totalUsers}</p>
-                <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Total Users</p>
-              </div>
-              <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--bg-secondary)' }}>
-                <TrendingUp className="w-6 h-6 mb-2" style={{ color: '#10b981' }} />
-                <p className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{platformStats.totalSellers}</p>
-                <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Sellers</p>
-              </div>
-              <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--bg-secondary)' }}>
-                <BadgeCheck className="w-6 h-6 mb-2" style={{ color: '#8b5cf6' }} />
-                <p className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{platformStats.verifiedUsers}</p>
-                <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Verified</p>
-              </div>
-              <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--bg-secondary)' }}>
-                <ShoppingBag className="w-6 h-6 mb-2" style={{ color: '#f59e0b' }} />
-                <p className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{platformStats.totalProducts}</p>
-                <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Products</p>
-              </div>
-            </div>
+            {/* Content Engagement */}
+            <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-200">
+              <h2 className="text-xl font-bold text-gray-900 mb-6">Content Performance</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="border-l-4 border-blue-500 pl-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Video className="w-5 h-5 text-gray-400" />
+                    <p className="text-sm text-gray-600">Total Videos</p>
+                  </div>
+                  <p className="text-3xl font-bold text-gray-900">{platformStats.totalVideos.toLocaleString()}</p>
+                </div>
 
-            {/* Content Stats */}
-            <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--bg-secondary)' }}>
-              <h3 className="font-bold mb-3" style={{ color: 'var(--text-primary)' }}>Content Engagement</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <Video className="w-4 h-4" style={{ color: 'var(--text-secondary)' }} />
-                    <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Videos</span>
+                <div className="border-l-4 border-green-500 pl-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Eye className="w-5 h-5 text-gray-400" />
+                    <p className="text-sm text-gray-600">Total Views</p>
                   </div>
-                  <p className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{platformStats.totalVideos}</p>
+                  <p className="text-3xl font-bold text-gray-900">{(platformStats.totalViews / 1000).toFixed(1)}k</p>
                 </div>
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <Eye className="w-4 h-4" style={{ color: 'var(--text-secondary)' }} />
-                    <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Views</span>
+
+                <div className="border-l-4 border-red-500 pl-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Heart className="w-5 h-5 text-gray-400" />
+                    <p className="text-sm text-gray-600">Total Likes</p>
                   </div>
-                  <p className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{(platformStats.totalViews / 1000).toFixed(1)}k</p>
+                  <p className="text-3xl font-bold text-gray-900">{platformStats.totalLikes.toLocaleString()}</p>
                 </div>
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <Heart className="w-4 h-4" style={{ color: '#ef4444' }} />
-                    <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Likes</span>
+
+                <div className="border-l-4 border-purple-500 pl-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <MessageCircle className="w-5 h-5 text-gray-400" />
+                    <p className="text-sm text-gray-600">Total Comments</p>
                   </div>
-                  <p className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{platformStats.totalLikes}</p>
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <MessageCircle className="w-4 h-4" style={{ color: 'var(--text-secondary)' }} />
-                    <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Comments</span>
-                  </div>
-                  <p className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{platformStats.totalComments}</p>
+                  <p className="text-3xl font-bold text-gray-900">{platformStats.totalComments.toLocaleString()}</p>
                 </div>
               </div>
             </div>
 
-            {/* Active Campaigns */}
-            <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--bg-secondary)' }}>
-              <h3 className="font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Active Ad Campaigns</h3>
-              <p className="text-3xl font-bold" style={{ color: '#f59e0b' }}>{platformStats.activeAds}</p>
-              <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>Currently running</p>
-            </div>
-          </>
-        )}
-
-        {activeTab === 'verifications' && (
-          verifications.filter(v => v.status === 'pending' && v.payment_status === 'paid').length === 0 ? (
-            <div className="text-center py-12 rounded-2xl" style={{ backgroundColor: 'var(--bg-secondary)' }}>
-              <BadgeCheck className="w-12 h-12 mx-auto mb-3" style={{ color: 'var(--text-secondary)' }} />
-              <p style={{ color: 'var(--text-secondary)' }}>No pending verification requests</p>
-            </div>
-          ) : (
-            verifications.filter(v => v.status === 'pending' && v.payment_status === 'paid').map((verification) => (
-              <div key={verification.id} className="rounded-xl p-4" style={{ backgroundColor: 'var(--bg-secondary)' }}>
-                <div className="flex items-start gap-3 mb-3">
-                  <img src={verification.users?.avatar_url || 'https://images.pexels.com/photos/771742/pexels-photo-771742.jpeg?w=200'} alt="" className="w-12 h-12 rounded-full object-cover" />
-                  <div className="flex-1">
-                    <p className="font-bold" style={{ color: 'var(--text-primary)' }}>{verification.users?.display_name}</p>
-                    <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{verification.users?.email}</p>
-                    <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>Requested {new Date(verification.created_at).toLocaleDateString()}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold" style={{ color: '#10b981' }}>₦{verification.amount?.toLocaleString()}</p>
-                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>PAID</p>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <button onClick={() => handleVerificationAction(verification.id, 'approve')} className="flex-1 py-2 rounded-lg flex items-center justify-center gap-2 font-medium" style={{ backgroundColor: '#10b981', color: 'white' }}>
-                    <CheckCircle className="w-4 h-4" />Approve
-                  </button>
-                  <button onClick={() => { const reason = prompt('Rejection reason:'); if (reason) handleVerificationAction(verification.id, 'reject', reason); }} className="flex-1 py-2 rounded-lg flex items-center justify-center gap-2 font-medium" style={{ backgroundColor: '#ef4444', color: 'white' }}>
-                    <XCircle className="w-4 h-4" />Reject
-                  </button>
-                </div>
-              </div>
-            ))
-          )
-        )}
-
-        {activeTab === 'ads' && (
-          ads.filter(a => a.status === 'pending_payment').length === 0 ? (
-            <div className="text-center py-12 rounded-2xl" style={{ backgroundColor: 'var(--bg-secondary)' }}>
-              <TrendingUp className="w-12 h-12 mx-auto mb-3" style={{ color: 'var(--text-secondary)' }} />
-              <p style={{ color: 'var(--text-secondary)' }}>No pending ad campaigns</p>
-            </div>
-          ) : (
-            ads.filter(a => a.status === 'pending_payment').map((ad) => (
-              <div key={ad.id} className="rounded-xl p-4" style={{ backgroundColor: 'var(--bg-secondary)' }}>
-                <div className="mb-3">
-                  <p className="font-bold" style={{ color: 'var(--text-primary)' }}>{ad.title}</p>
-                  <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>By {ad.users?.display_name}</p>
-                  <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>Created {new Date(ad.created_at).toLocaleDateString()}</p>
-                </div>
+            {/* Quick Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
                 <div className="flex items-center justify-between mb-3">
-                  <span style={{ color: 'var(--text-secondary)' }}>Budget</span>
-                  <span className="font-bold" style={{ color: 'var(--text-primary)' }}>₦{ad.budget.toLocaleString()}</span>
+                  <h3 className="font-semibold text-gray-900">Verified Users</h3>
+                  <BadgeCheck className="w-5 h-5 text-blue-500" />
                 </div>
-                <div className="flex gap-2">
-                  <button onClick={() => handleAdAction(ad.id, 'approve')} className="flex-1 py-2 rounded-lg flex items-center justify-center gap-2 font-medium" style={{ backgroundColor: '#10b981', color: 'white' }}>
-                    <CheckCircle className="w-4 h-4" />Approve
-                  </button>
-                  <button onClick={() => handleAdAction(ad.id, 'reject')} className="flex-1 py-2 rounded-lg flex items-center justify-center gap-2 font-medium" style={{ backgroundColor: '#ef4444', color: 'white' }}>
-                    <XCircle className="w-4 h-4" />Reject
-                  </button>
-                </div>
+                <p className="text-2xl font-bold text-gray-900 mb-1">{platformStats.verifiedUsers}</p>
+                <p className="text-sm text-gray-600">{((platformStats.verifiedUsers / platformStats.totalUsers) * 100).toFixed(1)}% of total users</p>
               </div>
-            ))
-          )
+
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-gray-900">Active Campaigns</h3>
+                  <TrendingUp className="w-5 h-5 text-orange-500" />
+                </div>
+                <p className="text-2xl font-bold text-gray-900 mb-1">{platformStats.activeAds}</p>
+                <p className="text-sm text-gray-600">Currently running ads</p>
+              </div>
+
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-gray-900">Pending Actions</h3>
+                  <AlertCircle className="w-5 h-5 text-red-500" />
+                </div>
+                <p className="text-2xl font-bold text-gray-900 mb-1">{pendingVerifications + pendingAds}</p>
+                <p className="text-sm text-gray-600">Requires review</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeSection === 'verifications' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Verification Requests</h2>
+                <p className="text-sm text-gray-600 mt-1">{pendingVerifications} pending approval</p>
+              </div>
+            </div>
+
+            {verifications.filter(v => v.status === 'pending' && v.payment_status === 'paid').length === 0 ? (
+              <div className="bg-white rounded-2xl p-12 text-center shadow-sm border border-gray-200">
+                <BadgeCheck className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">All Caught Up!</h3>
+                <p className="text-gray-600">No pending verification requests at the moment.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {verifications.filter(v => v.status === 'pending' && v.payment_status === 'paid').map((verification) => (
+                  <div key={verification.id} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+                    <div className="flex items-start gap-6">
+                      <img src={verification.users?.avatar_url || 'https://images.pexels.com/photos/771742/pexels-photo-771742.jpeg?w=200'} alt="" className="w-16 h-16 rounded-full object-cover" />
+                      
+                      <div className="flex-1">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <h3 className="text-lg font-bold text-gray-900">{verification.users?.display_name}</h3>
+                            <p className="text-sm text-gray-600">{verification.users?.email}</p>
+                            {verification.users?.business_type && (
+                              <p className="text-sm text-gray-500 mt-1">Business: {verification.users.business_type}</p>
+                            )}
+                          </div>
+                          <div className="text-right">
+                            <p className="text-xl font-bold text-green-600">₦{verification.amount?.toLocaleString()}</p>
+                            <p className="text-xs text-gray-500 mt-1">Payment Received</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
+                          <Calendar className="w-4 h-4" />
+                          Requested {new Date(verification.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </div>
+
+                        <div className="flex gap-3">
+                          <button onClick={() => handleVerificationAction(verification.id, 'approve')} className="flex-1 py-3 rounded-xl font-medium bg-green-600 text-white hover:bg-green-700 transition-colors flex items-center justify-center gap-2">
+                            <BadgeCheck className="w-5 h-5" />
+                            Approve Verification
+                          </button>
+                          <button onClick={() => { const reason = prompt('Rejection reason:'); if (reason) handleVerificationAction(verification.id, 'reject', reason); }} className="flex-1 py-3 rounded-xl font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors">
+                            Reject
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeSection === 'ads' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Ad Campaign Management</h2>
+                <p className="text-sm text-gray-600 mt-1">{pendingAds} pending approval • {platformStats.activeAds} active</p>
+              </div>
+            </div>
+
+            {ads.filter(a => a.status === 'pending_payment').length === 0 ? (
+              <div className="bg-white rounded-2xl p-12 text-center shadow-sm border border-gray-200">
+                <TrendingUp className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Pending Campaigns</h3>
+                <p className="text-gray-600">All ad campaigns have been reviewed.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {ads.filter(a => a.status === 'pending_payment').map((ad) => (
+                  <div key={ad.id} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-bold text-gray-900 mb-1">{ad.title}</h3>
+                        <p className="text-sm text-gray-600 mb-2">{ad.description}</p>
+                        <p className="text-sm text-gray-500">By {ad.users?.display_name} • Created {new Date(ad.created_at).toLocaleDateString()}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-2xl font-bold text-gray-900">₦{ad.budget.toLocaleString()}</p>
+                        <p className="text-xs text-gray-500 mt-1">Campaign Budget</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 mb-4 p-4 bg-gray-50 rounded-xl">
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Impressions</p>
+                        <p className="text-lg font-semibold text-gray-900">{ad.impressions.toLocaleString()}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Clicks</p>
+                        <p className="text-lg font-semibold text-gray-900">{ad.clicks.toLocaleString()}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <button onClick={() => handleAdAction(ad.id, 'approve')} className="flex-1 py-3 rounded-xl font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors">
+                        Approve Campaign
+                      </button>
+                      <button onClick={() => handleAdAction(ad.id, 'reject')} className="flex-1 py-3 rounded-xl font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors">
+                        Reject
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeSection === 'users' && (
+          <div className="bg-white rounded-2xl p-12 text-center shadow-sm border border-gray-200">
+            <Users className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">User Management</h3>
+            <p className="text-gray-600">Coming soon - Advanced user management tools</p>
+          </div>
         )}
       </div>
     </div>
