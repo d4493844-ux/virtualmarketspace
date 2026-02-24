@@ -18,8 +18,9 @@ export type User = {
   business_type: string | null;
   location: string | null;
   is_verified: boolean;
-    phone?: string | null;   // ✅ ADD THIS
   is_seller: boolean;
+  is_admin: boolean; 
+  phone?: string | null;
   follower_count: number;
   following_count: number;
   created_at: string;

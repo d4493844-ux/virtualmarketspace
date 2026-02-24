@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 
@@ -10,13 +10,13 @@ import ProfilePage from './pages/ProfilePage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import SettingsPage from './pages/SettingsPage';
 import SmartCityPage from './pages/SmartCityPage';
-import AdminPage from './pages/AdminPage';
 import CataloguePage from './pages/CataloguePage';
 import AddProductPage from './pages/AddProductPage';
 import PublicStorePage from './pages/PublicStorePage';
 import CreatePostPage from './pages/CreatePostPage';
 import MessagesPage from './pages/MessagesPage';
 import VideoDetailPage from './pages/VideoDetailPage';
+
 // Settings Pages
 import VerificationPage from './pages/VerificationPage';
 import AddressBookPage from './pages/AddressBookPage';
@@ -30,6 +30,11 @@ import PrivacySettingsPage from './pages/PrivacySettingsPage';
 import HelpSupportPage from './pages/HelpSupportPage';
 import LegalPoliciesPage from './pages/LegalPoliciesPage';
 import DeleteAccountPage from './pages/DeleteAccountPage';
+
+// Ads & Admin Pages
+import AdsDashboardPage from './pages/AdsDashboardPage';
+import CreateAdPage from './pages/CreateAdPage';
+import AdminDashboardPage from './pages/AdminDashboardPage';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -61,7 +66,7 @@ function App() {
             <Route path="/settings" element={<PrivateRoute><SettingsPage /></PrivateRoute>} />
             <Route path="/video/:videoId" element={<PrivateRoute><VideoDetailPage /></PrivateRoute>} />
             
-            {/* Settings Sub-Routes - ALL FUNCTIONAL */}
+            {/* Settings Sub-Routes */}
             <Route path="/settings/profile" element={<PrivateRoute><EditProfilePage /></PrivateRoute>} />
             <Route path="/settings/address" element={<PrivateRoute><AddressBookPage /></PrivateRoute>} />
             <Route path="/settings/contact" element={<PrivateRoute><ContactInfoPage /></PrivateRoute>} />
@@ -75,13 +80,21 @@ function App() {
             <Route path="/settings/legal" element={<PrivateRoute><LegalPoliciesPage /></PrivateRoute>} />
             <Route path="/settings/delete-account" element={<PrivateRoute><DeleteAccountPage /></PrivateRoute>} />
             
+            {/* Other Pages */}
             <Route path="/smart-city" element={<PrivateRoute><SmartCityPage /></PrivateRoute>} />
-            <Route path="/admin" element={<PrivateRoute><AdminPage /></PrivateRoute>} />
             <Route path="/catalogue" element={<PrivateRoute><CataloguePage /></PrivateRoute>} />
             <Route path="/catalogue/add" element={<PrivateRoute><AddProductPage /></PrivateRoute>} />
             <Route path="/store/:sellerId" element={<PrivateRoute><PublicStorePage /></PrivateRoute>} />
             <Route path="/create" element={<PrivateRoute><CreatePostPage /></PrivateRoute>} />
             <Route path="/messages/:userId" element={<PrivateRoute><MessagesPage /></PrivateRoute>} />
+            
+            {/* Ads Routes */}
+            <Route path="/ads/dashboard" element={<PrivateRoute><AdsDashboardPage /></PrivateRoute>} />
+            <Route path="/ads/create" element={<PrivateRoute><CreateAdPage /></PrivateRoute>} />
+            
+            {/* Admin Route - FIXED! */}
+            <Route path="/admin" element={<PrivateRoute><AdminDashboardPage /></PrivateRoute>} />
+            
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </AuthProvider>
