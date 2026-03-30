@@ -1,4 +1,4 @@
-import { ArrowLeft, Rocket, Truck, Home as HomeIcon, Zap, Smartphone, Shield, TrendingUp, Users, Cpu, Wifi, Package, Clock, Star } from 'lucide-react';
+import { ArrowLeft, Rocket, Truck, Home as HomeIcon, Smartphone, Shield, TrendingUp, Users, Cpu, Package, Clock, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function SmartCityPage() {

@@ -9,7 +9,7 @@ export default function ExplorePage() {
   const [topProducts, setTopProducts] = useState<Product[]>([]);
   const [trendingHashtags, setTrendingHashtags] = useState<string[]>([]);
   const [searchResults, setSearchResults] = useState<{ videos: Video[]; products: Product[] } | null>(null);
-  const [loading, setLoading] = useState(false);
+  
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -43,7 +43,7 @@ export default function ExplorePage() {
       }, {} as Record<string, number>);
 
       const sorted = Object.entries(tagCounts)
-        .sort(([, a], [, b]) => b - a)
+        .sort(([, a], [, b]) => (b as number) - (a as number))
         .slice(0, 10)
         .map(([tag]) => tag);
 

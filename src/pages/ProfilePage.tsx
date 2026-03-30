@@ -12,7 +12,7 @@ export default function ProfilePage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [activeTab, setActiveTab] = useState<'videos' | 'products'>('videos');
   const [isFollowing, setIsFollowing] = useState(false);
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const isOwnProfile = !userId || userId === user?.id;

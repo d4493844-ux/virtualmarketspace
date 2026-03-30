@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Target, Calendar, DollarSign, CreditCard, Loader } from 'lucide-react';
+import { ArrowLeft, Target, CreditCard, Loader } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -21,7 +21,7 @@ export default function CreateAdPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(false);
+  
   const [paymentLoading, setPaymentLoading] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -136,7 +136,7 @@ export default function CreateAdPage() {
           }
         ]
       },
-      callback: async (response: any) => {
+      callback: async (_response: any) => {
         await supabase
           .from('ads')
           .update({ 

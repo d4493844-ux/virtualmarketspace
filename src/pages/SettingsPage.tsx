@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  ArrowLeft, Moon, Sun, LogOut, User, MapPin, CreditCard, Bell, Lock,
+  ArrowLeft, Moon, Sun, LogOut, MapPin, CreditCard, Bell, Lock,
   Shield, HelpCircle, FileText, BadgeCheck, Crown, Globe, Phone, Trash2,
   TrendingUp, ChevronRight, Zap, Settings2, Wallet, Bike
 } from 'lucide-react';

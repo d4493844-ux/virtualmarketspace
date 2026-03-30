@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Users, TrendingUp, ShoppingBag, Video, DollarSign, Eye, Heart, MessageCircle, BadgeCheck, AlertCircle, Activity, Calendar, Download, Search, Ban, CheckCircle, X, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Users, TrendingUp, ShoppingBag, Video, DollarSign, Eye, Heart, MessageCircle, BadgeCheck, AlertCircle, Activity, Calendar, Download, Search, Ban, X, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';

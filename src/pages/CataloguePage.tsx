@@ -128,8 +128,8 @@ export default function CataloguePage() {
                     <p className="text-sm mb-2 line-clamp-2" style={{ color: 'var(--text-secondary)' }}>{product.description}</p>
                     <div className="flex items-center gap-4">
                       <p className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>₦{product.price.toLocaleString()}</p>
-                      {product.delivery_fee > 0 && (
-                        <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>+ ₦{product.delivery_fee} delivery</p>
+                      {false && (
+                        <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>+ ₦{0} delivery</p>
                       )}
                     </div>
                     <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>Stock: {product.stock}</p>

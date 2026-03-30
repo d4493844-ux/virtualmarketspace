@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, MessageCircle, Share2, MapPin, BadgeCheck, Star, Package, Grid3X3, List, Search, ShoppingBag, ExternalLink } from 'lucide-react';
+import { ArrowLeft, MessageCircle, Share2, MapPin, BadgeCheck, Package, Grid3X3, List, Search, ShoppingBag, ExternalLink } from 'lucide-react';
 import { supabase, type Product, type User } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -223,7 +223,7 @@ export default function PublicStorePage() {
             {categories.map(cat => (
               <button
                 key={cat}
-                onClick={() => setSelectedCategory(cat)}
+                onClick={() => setSelectedCategory(cat ?? "")}
                 className="flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all"
                 style={{
                   backgroundColor: selectedCategory === cat ? 'var(--text-primary)' : 'var(--bg-secondary)',
@@ -295,8 +295,8 @@ export default function PublicStorePage() {
                 <div className="p-3">
                   <p className="text-sm font-semibold line-clamp-2 mb-1.5" style={{ color: 'var(--text-primary)' }}>{product.title}</p>
                   <p className="text-base font-extrabold" style={{ color: 'var(--text-primary)' }}>₦{product.price?.toLocaleString()}</p>
-                  {product.delivery_fee > 0 && (
-                    <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>+₦{product.delivery_fee.toLocaleString()} delivery</p>
+                  {false && (
+                    <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>+₦{0} delivery</p>
                   )}
                 </div>
               </div>

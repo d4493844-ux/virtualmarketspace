@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Wallet, ArrowUpRight, ArrowDownLeft, Send,
-  Building2, Plus, RefreshCw, Loader, CheckCircle, X, ChevronRight
+  Building2, Plus, RefreshCw, Loader, CheckCircle, X
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';

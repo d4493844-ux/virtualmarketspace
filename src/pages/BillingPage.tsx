@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
-  ArrowLeft, CreditCard, Calendar, Check, BadgeCheck, AlertCircle,
-  Loader, Zap, ShieldCheck, RefreshCw, ChevronRight, Clock
+  ArrowLeft, CreditCard, Calendar, Check, BadgeCheck,
+  Loader, Zap, ShieldCheck, RefreshCw, Clock
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
@@ -139,7 +139,7 @@ export default function BillingPage() {
           { display_name: 'Plan', variable_name: 'plan', value: 'monthly' },
         ],
       },
-      callback: async (response: any) => {
+      callback: async (_response: any) => {
         await supabase
           .from('verification_requests')
           .update({ payment_status: 'paid', status: 'pending' })

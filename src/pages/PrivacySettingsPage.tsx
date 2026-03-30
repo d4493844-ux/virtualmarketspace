@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Eye, EyeOff, Lock, Users, MessageSquare, Mail, Phone, Save, Loader, Globe, UserCheck } from 'lucide-react';
+import { ArrowLeft, Eye, Lock, Users, MessageSquare, Mail, Phone, Save, Loader, Globe, UserCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';

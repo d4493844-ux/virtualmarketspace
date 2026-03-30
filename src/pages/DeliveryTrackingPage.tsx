@@ -37,7 +37,7 @@ const STATUS_STEPS = [
 export default function DeliveryTrackingPage() {
   const { orderId } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const mapRef = useRef<HTMLDivElement>(null);
