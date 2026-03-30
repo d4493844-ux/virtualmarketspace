@@ -1,6 +1,9 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { useState } from 'react';
+import SplashScreen from './components/SplashScreen';
+import PWAInstallBanner from './components/PWAInstallBanner';
 
 import AuthPage from './pages/AuthPage';
 import HomePage from './pages/HomePage';
@@ -51,55 +54,62 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
+  const [splashDone, setSplashDone] = useState(false);
+
   return (
-    <BrowserRouter>
-      <ThemeProvider>
-        <AuthProvider>
-          <Routes>
-            <Route path="/auth" element={<AuthPage />} />
-            <Route path="/" element={<PrivateRoute><HomePage /></PrivateRoute>} />
-            <Route path="/explore" element={<PrivateRoute><ExplorePage /></PrivateRoute>} />
-            <Route path="/notifications" element={<PrivateRoute><NotificationsPage /></PrivateRoute>} />
-            <Route path="/profile" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
-            <Route path="/profile/:userId" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
-            <Route path="/product/:id" element={<PrivateRoute><ProductDetailPage /></PrivateRoute>} />
-            <Route path="/settings" element={<PrivateRoute><SettingsPage /></PrivateRoute>} />
-            <Route path="/video/:videoId" element={<PrivateRoute><VideoDetailPage /></PrivateRoute>} />
-            
-            {/* Settings Sub-Routes */}
-            <Route path="/settings/profile" element={<PrivateRoute><EditProfilePage /></PrivateRoute>} />
-            <Route path="/settings/address" element={<PrivateRoute><AddressBookPage /></PrivateRoute>} />
-            <Route path="/settings/contact" element={<PrivateRoute><ContactInfoPage /></PrivateRoute>} />
-            <Route path="/settings/verification" element={<PrivateRoute><VerificationPage /></PrivateRoute>} />
-            <Route path="/settings/billing" element={<PrivateRoute><BillingPage /></PrivateRoute>} />
-            <Route path="/settings/notifications" element={<PrivateRoute><NotificationSettingsPage /></PrivateRoute>} />
-            <Route path="/settings/language" element={<PrivateRoute><LanguageRegionPage /></PrivateRoute>} />
-            <Route path="/settings/password" element={<PrivateRoute><PasswordSecurityPage /></PrivateRoute>} />
-            <Route path="/settings/privacy" element={<PrivateRoute><PrivacySettingsPage /></PrivateRoute>} />
-            <Route path="/settings/help" element={<PrivateRoute><HelpSupportPage /></PrivateRoute>} />
-            <Route path="/settings/legal" element={<PrivateRoute><LegalPoliciesPage /></PrivateRoute>} />
-            <Route path="/settings/delete-account" element={<PrivateRoute><DeleteAccountPage /></PrivateRoute>} />
-            
-            {/* Other Pages */}
-            <Route path="/smart-city" element={<PrivateRoute><SmartCityPage /></PrivateRoute>} />
-            <Route path="/catalogue" element={<PrivateRoute><CataloguePage /></PrivateRoute>} />
-            <Route path="/catalogue/add" element={<PrivateRoute><AddProductPage /></PrivateRoute>} />
-            <Route path="/store/:sellerId" element={<PrivateRoute><PublicStorePage /></PrivateRoute>} />
-            <Route path="/create" element={<PrivateRoute><CreatePostPage /></PrivateRoute>} />
-            <Route path="/messages/:userId" element={<PrivateRoute><MessagesPage /></PrivateRoute>} />
-            
-            {/* Ads Routes */}
-            <Route path="/ads/dashboard" element={<PrivateRoute><AdsDashboardPage /></PrivateRoute>} />
-            <Route path="/ads/create" element={<PrivateRoute><CreateAdPage /></PrivateRoute>} />
-            
-            {/* Admin Route - FIXED! */}
-            <Route path="/admin" element={<PrivateRoute><AdminDashboardPage /></PrivateRoute>} />
-            
-            <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
-        </AuthProvider>
-      </ThemeProvider>
-    </BrowserRouter>
+    <>
+      {!splashDone && <SplashScreen onDone={() => setSplashDone(true)} />}
+      <BrowserRouter>
+        <ThemeProvider>
+          <AuthProvider>
+            <PWAInstallBanner />
+            <Routes>
+              <Route path="/auth" element={<AuthPage />} />
+              <Route path="/" element={<PrivateRoute><HomePage /></PrivateRoute>} />
+              <Route path="/explore" element={<PrivateRoute><ExplorePage /></PrivateRoute>} />
+              <Route path="/notifications" element={<PrivateRoute><NotificationsPage /></PrivateRoute>} />
+              <Route path="/profile" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
+              <Route path="/profile/:userId" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
+              <Route path="/product/:id" element={<PrivateRoute><ProductDetailPage /></PrivateRoute>} />
+              <Route path="/settings" element={<PrivateRoute><SettingsPage /></PrivateRoute>} />
+              <Route path="/video/:videoId" element={<PrivateRoute><VideoDetailPage /></PrivateRoute>} />
+              
+              {/* Settings Sub-Routes */}
+              <Route path="/settings/profile" element={<PrivateRoute><EditProfilePage /></PrivateRoute>} />
+              <Route path="/settings/address" element={<PrivateRoute><AddressBookPage /></PrivateRoute>} />
+              <Route path="/settings/contact" element={<PrivateRoute><ContactInfoPage /></PrivateRoute>} />
+              <Route path="/settings/verification" element={<PrivateRoute><VerificationPage /></PrivateRoute>} />
+              <Route path="/settings/billing" element={<PrivateRoute><BillingPage /></PrivateRoute>} />
+              <Route path="/settings/notifications" element={<PrivateRoute><NotificationSettingsPage /></PrivateRoute>} />
+              <Route path="/settings/language" element={<PrivateRoute><LanguageRegionPage /></PrivateRoute>} />
+              <Route path="/settings/password" element={<PrivateRoute><PasswordSecurityPage /></PrivateRoute>} />
+              <Route path="/settings/privacy" element={<PrivateRoute><PrivacySettingsPage /></PrivateRoute>} />
+              <Route path="/settings/help" element={<PrivateRoute><HelpSupportPage /></PrivateRoute>} />
+              <Route path="/settings/legal" element={<PrivateRoute><LegalPoliciesPage /></PrivateRoute>} />
+              <Route path="/settings/delete-account" element={<PrivateRoute><DeleteAccountPage /></PrivateRoute>} />
+              
+              {/* Other Pages */}
+              <Route path="/smart-city" element={<PrivateRoute><SmartCityPage /></PrivateRoute>} />
+              <Route path="/catalogue" element={<PrivateRoute><CataloguePage /></PrivateRoute>} />
+              <Route path="/catalogue/add" element={<PrivateRoute><AddProductPage /></PrivateRoute>} />
+              <Route path="/store/:sellerId" element={<PublicStorePage />} />
+              <Route path="/create" element={<PrivateRoute><CreatePostPage /></PrivateRoute>} />
+              <Route path="/messages" element={<PrivateRoute><MessagesPage /></PrivateRoute>} />
+              <Route path="/messages/:userId" element={<PrivateRoute><MessagesPage /></PrivateRoute>} />
+              
+              {/* Ads Routes */}
+              <Route path="/ads/dashboard" element={<PrivateRoute><AdsDashboardPage /></PrivateRoute>} />
+              <Route path="/ads/create" element={<PrivateRoute><CreateAdPage /></PrivateRoute>} />
+              
+              {/* Admin Route */}
+              <Route path="/admin" element={<PrivateRoute><AdminDashboardPage /></PrivateRoute>} />
+              
+              <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+          </AuthProvider>
+        </ThemeProvider>
+      </BrowserRouter>
+    </>
   );
 }
 
