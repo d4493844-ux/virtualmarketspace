@@ -19,8 +19,7 @@ export type User = {
   location: string | null;
   is_verified: boolean;
   is_seller: boolean;
-  is_admin: boolean;
-  is_rider: boolean; 
+  is_admin: boolean; 
   phone?: string | null;
   follower_count: number;
   following_count: number;
