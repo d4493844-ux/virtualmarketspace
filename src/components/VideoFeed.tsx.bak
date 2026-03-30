@@ -28,13 +28,12 @@ export default function VideoFeed({ mode }: VideoFeedProps) {
       loadFollowedUsers();
       loadUserInterests();
     }
-  }, [user?.id]);
+  }, [user]);
 
-  // FIX 1: Only depend on mode and user id to prevent infinite re-render loop
   useEffect(() => {
     loadVideos();
     if (user) loadUserLikes();
-  }, [mode, user?.id]);
+  }, [mode, user, followedUsers, userInterests]);
 
   const loadUserInterests = async () => {
     if (!user) return;
@@ -167,12 +166,14 @@ export default function VideoFeed({ mode }: VideoFeedProps) {
   const handleShare = async (video: Video) => {
     await supabase.from('videos').update({ share_count: video.share_count + 1 }).eq('id', video.id);
     setVideos(videos.map(v => v.id === video.id ? { ...v, share_count: v.share_count + 1 } : v));
+
     const shareUrl = `${window.location.origin}/video/${video.id}`;
     const shareText = `Check out this post by ${video.user?.display_name} on VMS!\n\n${video.caption}`;
+
     if (navigator.share) {
       try {
         await navigator.share({ title: 'VMS Post', text: shareText, url: shareUrl });
-      } catch {
+      } catch (err) {
         navigator.clipboard.writeText(shareUrl);
         alert('Link copied to clipboard!');
       }
@@ -198,6 +199,7 @@ export default function VideoFeed({ mode }: VideoFeedProps) {
       {videos.map((video) => (
         <div key={video.id} className="h-screen w-full snap-start snap-always relative flex items-center justify-center" style={{ backgroundColor: '#000' }}>
           
+          {/* Video/Image */}
           {video.type === 'video' && video.video_url ? (
             <video src={video.video_url} className="w-full h-full object-cover" loop autoPlay muted playsInline />
           ) : video.type === 'image' && video.image_url ? (
@@ -208,6 +210,7 @@ export default function VideoFeed({ mode }: VideoFeedProps) {
             </div>
           )}
 
+          {/* ABSOLUTE positioning - Right Icons (per video) */}
           <div className="absolute right-4 bottom-32 flex flex-col gap-6 z-10">
             <button onClick={() => navigate(`/profile/${video.user_id}`)} className="flex flex-col items-center">
               <img src={video.user?.avatar_url || 'https://images.pexels.com/photos/771742/pexels-photo-771742.jpeg?w=200'} alt="" className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-lg" />
@@ -235,6 +238,7 @@ export default function VideoFeed({ mode }: VideoFeedProps) {
             )}
           </div>
 
+          {/* ABSOLUTE positioning - Bottom Info (per video) */}
           <div className="absolute bottom-32 left-4 right-24 z-10">
             <p className="font-bold text-white mb-1 text-shadow">{video.user?.display_name}</p>
             <p className="text-sm text-white mb-2 text-shadow line-clamp-2">{video.caption}</p>
@@ -245,6 +249,7 @@ export default function VideoFeed({ mode }: VideoFeedProps) {
             )}
           </div>
 
+          {/* Comments Modal */}
           {showComments === video.id && (
             <div className="absolute inset-0 bg-black bg-opacity-60 flex items-end z-30" onClick={() => setShowComments(null)}>
               <div className="w-full rounded-t-3xl max-h-[75vh] flex flex-col" style={{ backgroundColor: 'var(--bg-primary)' }} onClick={(e) => e.stopPropagation()}>
@@ -268,8 +273,7 @@ export default function VideoFeed({ mode }: VideoFeedProps) {
                   )}
                 </div>
                 <div className="p-4 flex gap-2" style={{ borderTop: '1px solid var(--border-color)' }}>
-                  {/* FIX 2: onKeyPress replaced with onKeyDown */}
-                  <input type="text" value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder="Add a comment..." className="flex-1 px-4 py-3 rounded-full" style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleComment(video); } }} />
+                  <input type="text" value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder="Add a comment..." className="flex-1 px-4 py-3 rounded-full" style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }} onKeyPress={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleComment(video); } }} />
                   <button onClick={() => handleComment(video)} className="w-11 h-11 rounded-full flex items-center justify-center" style={{ backgroundColor: '#3b82f6' }}>
                     <Send className="w-5 h-5 text-white" />
                   </button>
