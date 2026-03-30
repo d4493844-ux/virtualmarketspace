@@ -12,7 +12,7 @@ export default function LegalPoliciesPage() {
       title: 'Terms of Service',
       subtitle: 'User agreement and platform rules',
       icon: FileText,
-      content: `**Effective Date:** [Insert Date]
+      content: `Effective Date: March 30, 2026
 
 By using VMS, you agree to the following Terms of Service:
 
@@ -27,26 +27,28 @@ By using VMS, you agree to the following Terms of Service:
       title: 'Privacy Policy',
       subtitle: 'How we handle your data',
       icon: Shield,
-      content: `**Effective Date:** [Insert Date]
+      content: `Effective Date: March 30, 2026
 
 At VMS, we value your privacy. We collect information you provide to create accounts, verify identity, and deliver our services.
 
-**Information collected:** Email, account details, usage data.
+Information collected: Email, account details, usage data.
 
-**How we use it:** Account management, transactional emails (OTP, onboarding, order updates), platform improvements.
+How we use it: Account management, transactional emails (OTP, onboarding, order updates), platform improvements.
 
-**Email communications:** Users consent to account-related emails; non-essential emails can be unsubscribed.
+Email communications: Users consent to account-related emails; non-essential emails can be unsubscribed.
 
-**Data retention & deletion:** You can request account and data deletion anytime.
+Data retention and deletion: You can request account and data deletion anytime.
 
-**Security:** We implement measures to protect your data.`
+Security: We implement measures to protect your data.`
     },
     {
       key: 'cookie',
       title: 'Cookie Policy',
       subtitle: 'How we use cookies',
       icon: Eye,
-      content: `VMS uses cookies to improve your experience:
+      content: `Effective Date: March 30, 2026
+
+VMS uses cookies to improve your experience:
 
 - Necessary cookies: Enable core functionality like login.
 - Performance cookies: Help us understand platform usage.
@@ -59,7 +61,9 @@ You can manage or disable cookies through browser settings, but some features ma
       title: 'Community Guidelines',
       subtitle: 'Rules for using VMS',
       icon: AlertCircle,
-      content: `We maintain a safe and respectful environment. Users must:
+      content: `Effective Date: March 30, 2026
+
+We maintain a safe and respectful environment. Users must:
 
 - Treat others respectfully and professionally.
 - Avoid posting illegal, abusive, or misleading content.
@@ -106,7 +110,7 @@ Violations may result in content removal, suspension, or account termination.`
 
         {/* Footer */}
         <div className="rounded-2xl p-5 text-center" style={{ backgroundColor: 'var(--bg-secondary)' }}>
-          <p className="text-sm mb-2" style={{ color: 'var(--text-secondary)' }}>Last updated: February 10, 2026</p>
+          <p className="text-sm mb-2" style={{ color: 'var(--text-secondary)' }}>Last updated: March 30, 2026</p>
           <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>© 2026 VMS - Virtual Market Space. All rights reserved.</p>
         </div>
       </div>
