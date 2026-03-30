@@ -221,6 +221,7 @@ export default function AdminDashboardPage() {
             { id: 'riders', label: 'Riders', icon: ShoppingBag, badge: 0 },
             { id: 'content', label: 'Content', icon: Video, badge: 0 },
             { id: 'support', label: 'Support', icon: MessageCircle, badge: 0 },
+            { id: 'support', label: 'Support', icon: MessageCircle, badge: 0 },
           ] as const).map(tab => (
             <button key={tab.id} onClick={() => setActiveSection(tab.id)}
               style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '14px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', color: activeSection === tab.id ? '#3b82f6' : '#64748b', background: 'none', border: 'none', borderBottom: `2px solid ${activeSection === tab.id ? '#3b82f6' : 'transparent'}` }}>
@@ -486,6 +487,8 @@ export default function AdminDashboardPage() {
         )}
 
         {activeSection === 'riders' && <RidersSection />}
+
+        {activeSection === 'support' && <SupportSection />}
 
         {activeSection === 'support' && <SupportSection />}
 
