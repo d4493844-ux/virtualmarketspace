@@ -7,32 +7,77 @@ export default function HomePage() {
 
   return (
     <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--bg-primary)' }}>
-      <div className="fixed top-0 left-0 right-0 z-10 flex items-center justify-center h-12" style={{ backgroundColor: 'var(--bg-primary)', borderBottom: '1px solid var(--border-color)' }}>
-        <div className="flex rounded-full p-1" style={{ backgroundColor: 'var(--bg-secondary)' }}>
-          <button
-            onClick={() => setFeedMode('following')}
-            className="px-6 py-1.5 rounded-full text-sm font-medium transition-all"
-            style={{
-              backgroundColor: feedMode === 'following' ? 'var(--text-primary)' : 'transparent',
-              color: feedMode === 'following' ? 'var(--bg-primary)' : 'var(--text-secondary)',
-            }}
-          >
-            Following
-          </button>
-          <button
-            onClick={() => setFeedMode('for-you')}
-            className="px-6 py-1.5 rounded-full text-sm font-medium transition-all"
-            style={{
-              backgroundColor: feedMode === 'for-you' ? 'var(--text-primary)' : 'transparent',
-              color: feedMode === 'for-you' ? 'var(--bg-primary)' : 'var(--text-secondary)',
-            }}
-          >
-            For You
-          </button>
-        </div>
+
+      {/* Floating tab pill - sits over the video, not pushing content down */}
+      <div style={{
+        position: 'fixed',
+        top: 16,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        zIndex: 50,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 4,
+        padding: '5px 6px',
+        borderRadius: 50,
+        background: 'rgba(0, 0, 0, 0.45)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        border: '1px solid rgba(255,255,255,0.12)',
+        boxShadow: '0 4px 24px rgba(0,0,0,0.25)',
+      }}>
+        <button
+          onClick={() => setFeedMode('following')}
+          style={{
+            padding: '7px 20px',
+            borderRadius: 50,
+            fontSize: 13,
+            fontWeight: 600,
+            border: 'none',
+            cursor: 'pointer',
+            transition: 'all 0.2s cubic-bezier(0.34,1.2,0.64,1)',
+            background: feedMode === 'following'
+              ? 'rgba(255,255,255,0.95)'
+              : 'transparent',
+            color: feedMode === 'following'
+              ? '#0f172a'
+              : 'rgba(255,255,255,0.75)',
+            boxShadow: feedMode === 'following'
+              ? '0 2px 8px rgba(0,0,0,0.2)'
+              : 'none',
+            letterSpacing: '0.01em',
+          }}
+        >
+          Following
+        </button>
+        <button
+          onClick={() => setFeedMode('for-you')}
+          style={{
+            padding: '7px 20px',
+            borderRadius: 50,
+            fontSize: 13,
+            fontWeight: 600,
+            border: 'none',
+            cursor: 'pointer',
+            transition: 'all 0.2s cubic-bezier(0.34,1.2,0.64,1)',
+            background: feedMode === 'for-you'
+              ? 'rgba(255,255,255,0.95)'
+              : 'transparent',
+            color: feedMode === 'for-you'
+              ? '#0f172a'
+              : 'rgba(255,255,255,0.75)',
+            boxShadow: feedMode === 'for-you'
+              ? '0 2px 8px rgba(0,0,0,0.2)'
+              : 'none',
+            letterSpacing: '0.01em',
+          }}
+        >
+          For You
+        </button>
       </div>
 
-      <div className="flex-1 mt-12">
+      {/* Video feed takes full screen - tabs float above it */}
+      <div className="flex-1">
         <VideoFeed mode={feedMode} />
       </div>
 
