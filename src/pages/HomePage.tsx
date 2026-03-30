@@ -8,14 +8,14 @@ export default function HomePage() {
   return (
     <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--bg-primary)' }}>
 
-      {/* Floating tab pill - sits over the video, not pushing content down */}
+      {/* Floating tab pill */}
       <div style={{
         position: 'fixed',
         top: 16,
         left: '50%',
         transform: 'translateX(-50%)',
         zIndex: 50,
-        display: 'flex',
+        display: 'inline-flex',
         alignItems: 'center',
         gap: 4,
         padding: '5px 6px',
@@ -25,11 +25,12 @@ export default function HomePage() {
         WebkitBackdropFilter: 'blur(16px)',
         border: '1px solid rgba(255,255,255,0.12)',
         boxShadow: '0 4px 24px rgba(0,0,0,0.25)',
+        whiteSpace: 'nowrap',        // ← prevents any wrapping on the container
       }}>
         <button
           onClick={() => setFeedMode('following')}
           style={{
-            padding: '7px 20px',
+            padding: '7px 18px',
             borderRadius: 50,
             fontSize: 13,
             fontWeight: 600,
@@ -46,6 +47,8 @@ export default function HomePage() {
               ? '0 2px 8px rgba(0,0,0,0.2)'
               : 'none',
             letterSpacing: '0.01em',
+            whiteSpace: 'nowrap',    // ← key fix: keeps "Following" on one line
+            display: 'inline-block',
           }}
         >
           Following
@@ -53,7 +56,7 @@ export default function HomePage() {
         <button
           onClick={() => setFeedMode('for-you')}
           style={{
-            padding: '7px 20px',
+            padding: '7px 18px',
             borderRadius: 50,
             fontSize: 13,
             fontWeight: 600,
@@ -70,13 +73,15 @@ export default function HomePage() {
               ? '0 2px 8px rgba(0,0,0,0.2)'
               : 'none',
             letterSpacing: '0.01em',
+            whiteSpace: 'nowrap',    // ← key fix: keeps "For You" on one line
+            display: 'inline-block',
           }}
         >
           For You
         </button>
       </div>
 
-      {/* Video feed takes full screen - tabs float above it */}
+      {/* Video feed */}
       <div className="flex-1">
         <VideoFeed mode={feedMode} />
       </div>

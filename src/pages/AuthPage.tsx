@@ -1,13 +1,17 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Store, Bike, User, ChevronRight } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+
+type AccountType = 'buyer' | 'seller' | 'rider';
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [accountType, setAccountType] = useState<AccountType>('buyer');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -23,11 +27,32 @@ export default function AuthPage() {
     try {
       if (isLogin) {
         await signIn(email, password);
+        navigate('/');
       } else {
         if (!displayName.trim()) { setError('Please enter your name'); setLoading(false); return; }
         await signUp(email, password, displayName);
+
+        // After sign-up, if seller or rider was selected — create the application record
+        if (accountType === 'seller') {
+          // Get the newly created user id
+          const { data: { user: authUser } } = await supabase.auth.getUser();
+          if (authUser) {
+            await supabase.from('users').update({ is_seller: true }).eq('id', authUser.id);
+          }
+        } else if (accountType === 'rider') {
+          const { data: { user: authUser } } = await supabase.auth.getUser();
+          if (authUser) {
+            // Insert a pending rider application for admin to review
+            await supabase.from('rider_applications').upsert({
+              user_id: authUser.id,
+              status: 'pending',
+              applied_at: new Date().toISOString(),
+            }, { onConflict: 'user_id' });
+          }
+        }
+
+        navigate('/');
       }
-      navigate('/');
     } catch (err: any) {
       setError(err.message || 'Authentication failed. Please check your details.');
     } finally {
@@ -41,7 +66,14 @@ export default function AuthPage() {
     setEmail('');
     setPassword('');
     setDisplayName('');
+    setAccountType('buyer');
   };
+
+  const accountTypes: { type: AccountType; label: string; sub: string; icon: typeof User }[] = [
+    { type: 'buyer', label: 'Buyer', sub: 'Browse & shop products', icon: User },
+    { type: 'seller', label: 'Become a Seller', sub: 'List & sell your products', icon: Store },
+    { type: 'rider', label: 'Apply as Rider', sub: 'Deliver orders & earn', icon: Bike },
+  ];
 
   return (
     <div
@@ -99,26 +131,83 @@ export default function AuthPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
-              <div>
-                <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: 'var(--text-secondary)' }}>
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl text-sm outline-none"
-                  style={{
-                    backgroundColor: 'var(--bg-primary)',
-                    color: 'var(--text-primary)',
-                    border: '1.5px solid var(--border-color)',
-                  }}
-                  placeholder="e.g. Chidi Okeke"
-                  autoComplete="name"
-                />
-              </div>
+              <>
+                {/* Full Name */}
+                <div>
+                  <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: 'var(--text-secondary)' }}>
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl text-sm outline-none"
+                    style={{
+                      backgroundColor: 'var(--bg-primary)',
+                      color: 'var(--text-primary)',
+                      border: '1.5px solid var(--border-color)',
+                    }}
+                    placeholder="e.g. Chidi Okeke"
+                    autoComplete="name"
+                  />
+                </div>
+
+                {/* Account Type chooser */}
+                <div>
+                  <label className="block text-xs font-semibold mb-2 uppercase tracking-wide" style={{ color: 'var(--text-secondary)' }}>
+                    I want to join as…
+                  </label>
+                  <div className="space-y-2">
+                    {accountTypes.map(({ type, label, sub, icon: Icon }) => (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => setAccountType(type)}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left"
+                        style={{
+                          backgroundColor: accountType === type ? 'var(--text-primary)' : 'var(--bg-primary)',
+                          border: `1.5px solid ${accountType === type ? 'var(--text-primary)' : 'var(--border-color)'}`,
+                        }}
+                      >
+                        <div
+                          className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                          style={{
+                            backgroundColor: accountType === type ? 'rgba(255,255,255,0.2)' : 'var(--bg-secondary)',
+                          }}
+                        >
+                          <Icon size={15} style={{ color: accountType === type ? 'var(--bg-primary)' : 'var(--text-secondary)' }} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold" style={{ color: accountType === type ? 'var(--bg-primary)' : 'var(--text-primary)' }}>
+                            {label}
+                          </p>
+                          <p className="text-xs" style={{ color: accountType === type ? 'rgba(0,0,0,0.5)' : 'var(--text-secondary)' }}>
+                            {sub}
+                          </p>
+                        </div>
+                        {accountType === type && (
+                          <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'var(--bg-primary)' }}>
+                            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: 'var(--text-primary)' }} />
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                  {accountType === 'rider' && (
+                    <p className="text-xs mt-2 px-1" style={{ color: '#f59e0b' }}>
+                      ⚡ Rider applications are reviewed by our team. You'll be notified once approved.
+                    </p>
+                  )}
+                  {accountType === 'seller' && (
+                    <p className="text-xs mt-2 px-1" style={{ color: '#22c55e' }}>
+                      ✓ Seller access is granted immediately. Complete verification to get the badge.
+                    </p>
+                  )}
+                </div>
+              </>
             )}
 
+            {/* Email */}
             <div>
               <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: 'var(--text-secondary)' }}>
                 Email Address
@@ -139,6 +228,7 @@ export default function AuthPage() {
               />
             </div>
 
+            {/* Password */}
             <div>
               <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: 'var(--text-secondary)' }}>
                 Password
@@ -189,10 +279,15 @@ export default function AuthPage() {
               style={{
                 backgroundColor: 'var(--text-primary)',
                 color: 'var(--bg-primary)',
-                letterSpacing: '0.2px',
               }}
             >
-              {loading ? 'Please wait…' : isLogin ? 'Sign In' : 'Create Account'}
+              {loading
+                ? 'Please wait…'
+                : isLogin
+                  ? 'Sign In'
+                  : accountType === 'rider'
+                    ? 'Apply & Create Account'
+                    : 'Create Account'}
             </button>
           </form>
         </div>
