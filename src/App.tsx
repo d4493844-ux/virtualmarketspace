@@ -41,6 +41,7 @@ import AdminDashboardPage from './pages/AdminDashboardPage';
 import WalletPage from './pages/WalletPage';
 import DeliveryTrackingPage from './pages/DeliveryTrackingPage';
 import RiderDashboardPage from './pages/RiderDashboardPage';
+import SupportAgentPage from './pages/SupportAgentPage';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -113,6 +114,7 @@ function App() {
               {/* Delivery & Rider */}
               <Route path="/delivery/:orderId" element={<PrivateRoute><DeliveryTrackingPage /></PrivateRoute>} />
               <Route path="/rider" element={<PrivateRoute><RiderDashboardPage /></PrivateRoute>} />
+              <Route path="/support-agent" element={<SupportAgentPage />} />
               
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>
