@@ -23,9 +23,7 @@ export default function CreateAdPage() {
   const [products, setProducts] = useState<Product[]>([]);
   
   const [loading, setLoading] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
-  const [loading, setLoading] = useState(false);
   
   const [formData, setFormData] = useState({
     product_id: '',
